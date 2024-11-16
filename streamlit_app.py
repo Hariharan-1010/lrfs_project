@@ -164,7 +164,7 @@ with tabs[2]:
             })
 
             # Process input data
-            processed_data = data_pipeline.data_pipeline(input_data.drop(columns=['Revenue']))
+            processed_data = data_pipeline.data_pipeline(input_data)
             prediction = clf.predict(processed_data)[0]
 
             st.success(f"Prediction: {prediction}")
