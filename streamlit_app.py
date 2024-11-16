@@ -166,8 +166,10 @@ with tabs[2]:
 
             # Process input data
             processed_data = data_pipeline.data_pipeline(input_data)
-            prediction = clf.predict(processed_data)[0]
 
-            st.success(f"Prediction Output: {prediction}")
+            features = processed_data.drop(columns=['Revenue'])
+            prediction = clf.predict(features)[0]
+
+            st.success(f"Prediction: {'Revenue Generated' if prediction == 1 else 'No Revenue Generated'}")
         except Exception as e:
-            st.error(f"Error making prediction is_changed?: {e}")
+            st.error(f"Error making prediction: {e}")
