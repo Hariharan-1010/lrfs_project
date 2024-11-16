@@ -170,4 +170,4 @@ with tabs[2]:
 
             st.success(f"Prediction Output: {prediction}")
         except Exception as e:
-            st.error(f"Error making prediction: {e}")
+            st.error(f"Error making prediction is_changed?: {e}")
