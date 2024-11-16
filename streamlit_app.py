@@ -161,7 +161,7 @@ with tabs[2]:
                 'ProductRelated': [int(product_related)],
                 'PageValues': [float(page_values)],
                 'ExitRates': [float(exit_rates)],
-                'Revenue': 0
+                'Revenue': [0]
             })
 
             # Process input data
