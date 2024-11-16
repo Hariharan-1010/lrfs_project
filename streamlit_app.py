@@ -160,13 +160,14 @@ with tabs[2]:
                 'Informational': [int(info)],
                 'ProductRelated': [int(product_related)],
                 'PageValues': [float(page_values)],
-                'ExitRates': [float(exit_rates)]
+                'ExitRates': [float(exit_rates)],
+                'Revenue': 0
             })
 
             # Process input data
             processed_data = data_pipeline.data_pipeline(input_data)
             prediction = clf.predict(processed_data)[0]
 
-            st.success(f"Prediction: {prediction}")
+            st.success(f"Prediction Output: {prediction}")
         except Exception as e:
             st.error(f"Error making prediction: {e}")
