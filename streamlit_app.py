@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, classification_report, roc_curve, auc
+import seaborn as sns
 import pickle
 
 # Define the DataPipeline and model as provided
@@ -59,13 +61,35 @@ data_pipeline = DataPipeline()
 st.title("🎈 My ML Project App")
 tabs = st.tabs(["Home", "Score", "Pred"])
 
-# Home Tab
 with tabs[0]:
-    st.header("Home")
-    st.write("**Description of the Project:**")
-    st.text_area("Add content here", height=200)
+    st.header("Welcome to the ML Project App")
+    st.subheader("Objective")
+    st.write(
+        """
+        This application leverages machine learning to score and predict customer behavior in online shopping. 
+        By analyzing key features like visitor type, monthly activity, and engagement metrics, 
+        we aim to provide insights into purchasing trends and outcomes.
+        """
+    )
+    st.subheader("Features")
+    st.write(
+        """
+        - **Score Tab**: Upload CSV data to evaluate and visualize model performance on real-world data.
+        - **Predict Tab**: Input individual customer details to generate predictions.
+        """
+    )
+    st.subheader("Model Details")
+    st.write(
+        """
+        The model is based on the LRFS (Length-Recency-Frequency-Staying Rate) methodology 
+        and trained using a Logistic Regression classifier.
+        """
+    )
 
-# Score Tab
+
+from sklearn.metrics import confusion_matrix, classification_report, roc_curve, auc
+import seaborn as sns
+
 with tabs[1]:
     st.header("Score")
     uploaded_file = st.file_uploader("Upload CSV file for scoring", type="csv")
@@ -75,47 +99,73 @@ with tabs[1]:
             input_data = pd.read_csv(uploaded_file)
             processed_data = data_pipeline.data_pipeline(input_data)
             scores = clf.predict(processed_data.drop(columns=['Revenue']))
+            actual = processed_data['Revenue']
 
             st.write("### Scored Data")
             processed_data['Scores'] = scores
             st.write(processed_data)
 
-            st.write("### Visualization")
+            # Metrics and Confusion Matrix
+            st.write("### Classification Metrics")
+            st.write("Accuracy:", (scores == actual).mean())
+
+            st.write("### Confusion Matrix")
+            cm = confusion_matrix(actual, scores)
             fig, ax = plt.subplots()
-            ax.hist(scores, bins=20, color='blue', alpha=0.7, edgecolor='black')
-            ax.set_title("Score Distribution")
-            ax.set_xlabel("Scores")
-            ax.set_ylabel("Frequency")
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax)
+            ax.set_title("Confusion Matrix")
+            ax.set_xlabel("Predicted")
+            ax.set_ylabel("Actual")
             st.pyplot(fig)
+
+            # Classification Report
+            st.write("### Detailed Report")
+            report = classification_report(actual, scores, output_dict=True)
+            st.write(pd.DataFrame(report).transpose())
+
+            # ROC Curve
+            st.write("### ROC Curve")
+            fpr, tpr, _ = roc_curve(actual, scores)
+            roc_auc = auc(fpr, tpr)
+            fig, ax = plt.subplots()
+            ax.plot(fpr, tpr, label=f"ROC Curve (AUC = {roc_auc:.2f})")
+            ax.plot([0, 1], [0, 1], 'k--', label="Random Guess")
+            ax.set_title("ROC Curve")
+            ax.set_xlabel("False Positive Rate")
+            ax.set_ylabel("True Positive Rate")
+            ax.legend()
+            st.pyplot(fig)
+
         except Exception as e:
             st.error(f"Error processing file: {e}")
 
-# Pred Tab
 with tabs[2]:
-    st.header("Pred")
+    st.header("Predict")
     st.write("### Input data for prediction")
     visitor_type = st.selectbox("Visitor Type", ["New_Visitor", "Returning_Visitor"])
     month = st.selectbox("Month", list(data_pipeline.month_encoder_dict.keys()))
-    admin = st.number_input("Administrative", min_value=0)
-    info = st.number_input("Informational", min_value=0)
-    product_related = st.number_input("Product Related", min_value=0)
-    page_values = st.number_input("Page Values", min_value=0.0, format="%.2f")
-    exit_rates = st.slider("Exit Rates", min_value=0.0, max_value=1.0, step=0.01)
+    admin = st.text_input("Administrative", value="0")
+    info = st.text_input("Informational", value="0")
+    product_related = st.text_input("Product Related", value="0")
+    page_values = st.text_input("Page Values", value="0.0")
+    exit_rates = st.text_input("Exit Rates", value="0.0")
 
     if st.button("Predict"):
         try:
+            # Ensure input values are correctly formatted
             input_data = pd.DataFrame({
                 'VisitorType': [visitor_type],
                 'Month': [month],
-                'Administrative': [admin],
-                'Informational': [info],
-                'ProductRelated': [product_related],
-                'PageValues': [page_values],
-                'ExitRates': [exit_rates]
+                'Administrative': [int(admin)],
+                'Informational': [int(info)],
+                'ProductRelated': [int(product_related)],
+                'PageValues': [float(page_values)],
+                'ExitRates': [float(exit_rates)]
             })
 
-            processed_data = data_pipeline.data_pipeline(input_data)
-            prediction = clf.predict(processed_data.drop(columns=['Revenue']))[0]
+            # Process input data
+            processed_data = data_pipeline.data_pipeline(input_data.drop(columns=['Revenue']))
+            prediction = clf.predict(processed_data)[0]
 
             st.success(f"Prediction: {prediction}")
         except Exception as e:
